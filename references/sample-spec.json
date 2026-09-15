@@ -1,0 +1,27 @@
+{
+  "schema_version": "2.0",
+  "metadata": {
+    "title": "Mac AutoCAD native redraw smoke test - NOT a user's plan",
+    "units": "mm"
+  },
+  "layers": [
+    {"name": "WALL", "color": 7, "linetype": "Continuous"},
+    {"name": "DOOR", "color": 2, "linetype": "Continuous"},
+    {"name": "WINDOW", "color": 4, "linetype": "Continuous"},
+    {"name": "DIM", "color": 3, "linetype": "Continuous"},
+    {"name": "TEXT", "color": 7, "linetype": "Continuous"}
+  ],
+  "entities": [
+    {"type": "line", "layer": "WALL", "start": [0, 0], "end": [4000, 0]},
+    {"type": "rectangle", "layer": "WALL", "p1": [0, 0], "p2": [4000, 3000]},
+    {"type": "polyline", "layer": "WINDOW", "points": [[700, 3000], [1700, 3000]]},
+    {"type": "circle", "layer": "DOOR", "center": [0, 0], "radius": 500},
+    {"type": "arc", "layer": "DOOR", "center": [400, 200], "radius": 800, "start_angle": 0, "end_angle": 90},
+    {"type": "text", "layer": "TEXT", "text": "卧室", "point": [1000, 1500], "height": 200},
+    {"type": "mtext", "layer": "TEXT", "text": "测试\n多行", "point": [2000, 2400], "height": 150, "width": 1000},
+    {"type": "leader", "layer": "TEXT", "points": [[500, 500], [600, 700]], "text": "门", "text_point": [650, 700], "text_height": 120},
+    {"type": "linear_dimension", "layer": "DIM", "p1": [0, 0], "p2": [4000, 0], "dimline": [2000, -300], "angle": 0},
+    {"type": "aligned_dimension", "layer": "DIM", "p1": [0, 0], "p2": [0, 3000], "dimline": [-300, 1500]},
+    {"type": "center_mark", "layer": "WINDOW", "center": [1200, 3000], "size": 120}
+  ]
+}

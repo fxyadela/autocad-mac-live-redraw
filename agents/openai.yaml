@@ -1,0 +1,3 @@
+interface:
+  display_name: "AutoCAD Mac 原生重绘"
+  short_description: "豆包在 Mac AutoCAD 分批绘图并验收可编辑 DWG"

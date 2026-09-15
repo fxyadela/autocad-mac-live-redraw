@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+*.lsp
+*.dwg
+*.dxf
+.DS_Store
+.venv/
