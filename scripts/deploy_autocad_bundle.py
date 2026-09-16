@@ -103,6 +103,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     print(f"Deployed current redraw: {target}")
     print("First install: restart AutoCAD once. Each run: create a NEW blank drawing, then type CADLIVE.")
+    print("Do NOT open APPLOAD or inspect its loaded-applications list; stop if CADLIVE is unknown.")
     return 0
 
 

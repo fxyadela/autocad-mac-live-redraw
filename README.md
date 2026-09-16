@@ -30,7 +30,7 @@ python3 scripts/compile_mac_redraw.py \
   --delay-ms 35
 ```
 
-编译成功只产生 `.lsp`，不会打开 AutoCAD、保存 DWG 或修改既有图纸。再运行编译器输出的 `deploy_autocad_bundle.py` 命令，把当前 LSP 部署到用户级 `ApplicationAddins` bundle。首次安装后在录制前重启 AutoCAD 一次；以后每轮只需后台部署新版 LSP 并新建空白图。画布中只输入短命令 `CADLIVE`，不要输入长 AutoLISP 表达式，也不要打开 `APPLOAD` 文件窗口。按首次代码加载安全提示正常处理，不要关闭 `SECURELOAD`。若出现 `CADREDRAW FAILED`、画布未完成或对象数不符，不保存部分图纸。成功后另存为**新的 DWG**，关闭重开，并实际选中/修改一个图元检验可编辑性。
+编译成功只产生 `.lsp`，不会打开 AutoCAD、保存 DWG 或修改既有图纸。再运行编译器输出的 `deploy_autocad_bundle.py` 命令，把当前 LSP 部署到用户级 `ApplicationAddins` bundle。首次安装后在录制前重启 AutoCAD 一次；以后每轮只需后台部署新版 LSP 并新建空白图。画布中只输入短命令 `CADLIVE`，不要输入长 AutoLISP 表达式，也不要打开 `APPLOAD` 文件窗口或“已加载的应用程序”列表；bundle 不需要通过该列表确认。按首次代码加载安全提示正常处理，不要关闭 `SECURELOAD`。若出现 `CADREDRAW FAILED`、画布未完成或对象数不符，不保存部分图纸。成功后另存为**新的 DWG**，关闭重开，并实际选中/修改一个图元检验可编辑性。
 
 如果交给豆包完成小样，可以这样说：
 
