@@ -2,7 +2,7 @@
 
 一个供豆包工作等具备本地电脑操作能力的 AI 代理使用的实验版 Skill：先把二维图纸整理成有证据、坐标、图层和图元的 JSON 清单，再生成 AutoCAD for Mac 可加载的 AutoLISP，先定位空白画布，再按顺序逐个显示真正可编辑的 CAD 对象；已有完整 DXF 时也可选择在 AutoCAD 中打开并另存为 DWG。
 
-> **状态（2026-09-16）：实验版。** “预先定位画布、逐个原生图元刷新、每个图元短暂停顿”的编译逻辑和离线测试已通过；合成小样已在 AutoCAD 2027 for Mac 实机完成 `CADLIVE`，确认生成 13 个原生模型空间对象。命令自动加载 bundle 已加入数字单键 `1`、`CADLIVE` 和 `CADFAST` 注册并通过离线部署测试；`1` 用于避免桌面代理只送入 `CADLIVE` 首字母而误启 `CIRCLE`。新清单仍需在 AutoCAD 中实机验证；复杂户型的逐个显示、DWG 保存与重开编辑也需分别验收。本项目不保证“上传图片就能自动准确出图”，请勿将小样测试视为正式图纸交付证明。
+> **状态（2026-09-16）：实验版。** “预先定位画布、逐个原生图元刷新、每个图元短暂停顿”的编译逻辑和离线测试已通过；合成小样已在 AutoCAD 2027 for Mac 实机完成 `CADLIVE`，确认生成 13 个原生模型空间对象。命令自动加载 bundle 已加入数字单键 `1`、`CADLIVE` 和 `CADFAST` 注册并通过离线部署测试；`1` 用于避免桌面代理只送入 `CADLIVE` 首字母而误启 `CIRCLE`。逐图元演示默认在完成后停留于未保存画布，只有用户明确要求时才保存 DWG。新清单仍需在 AutoCAD 中实机验证；复杂户型的逐个显示、DWG 保存与重开编辑也需分别验收。本项目不保证“上传图片就能自动准确出图”，请勿将小样测试视为正式图纸交付证明。
 
 ## 适用范围与条件
 
@@ -30,11 +30,11 @@ python3 scripts/compile_mac_redraw.py \
   --delay-ms 35
 ```
 
-编译成功只产生 `.lsp`，不会打开 AutoCAD、保存 DWG 或修改既有图纸。再运行编译器输出的 `deploy_autocad_bundle.py` 命令，把当前 LSP 部署到用户级 `ApplicationAddins` bundle。部署结果为 `BUNDLE_UPDATED` 时不重启，只需新建空白图；首次安装或命令清单升级时，AutoCAD for Mac 没有 `_APPAUTOLOADER` 命令，已打开时需在绘图任务前正常关闭并启动一次，之后不得在任务中反复重启。画布命令栏必须先处于空闲状态；若显示 `CIRCLE`/`SAVEAS` 等参数提示，按一次 Escape。随后用 `type_text` 只输入数字 `1`，再按 Return 启动逐图元绘制，不用桌面代理输入完整 `CADLIVE`。不要输入长 AutoLISP 表达式，不要打开 `APPLOAD`、帮助页、F1、浏览器或“已加载的应用程序”列表。若 `1` 未识别、出现 `CADREDRAW FAILED`、画布未完成或对象数不符，立即停止且不保存部分图纸。成功后另存为**新的 DWG**，关闭重开，并实际选中/修改一个图元检验可编辑性。
+编译成功只产生 `.lsp`，不会打开 AutoCAD、保存 DWG 或修改既有图纸。再运行编译器输出的 `deploy_autocad_bundle.py` 命令，把当前 LSP 部署到用户级 `ApplicationAddins` bundle。部署结果为 `BUNDLE_UPDATED` 时不重启，只需新建空白图；首次安装或命令清单升级时，AutoCAD for Mac 没有 `_APPAUTOLOADER` 命令，已打开时需在绘图任务前正常关闭并启动一次，之后不得在任务中反复重启。画布命令栏必须先处于空闲状态；若显示 `CIRCLE`/`SAVEAS` 等参数提示，按一次 Escape。随后用 `type_text` 只输入数字 `1`，再按 Return 启动逐图元绘制，不用桌面代理输入完整 `CADLIVE`。不要输入长 AutoLISP 表达式，不要打开 `APPLOAD`、帮助页、F1、浏览器或“已加载的应用程序”列表。若 `1` 未识别、出现 `CADREDRAW FAILED`、画布未完成或对象数不符，立即停止且不保存部分图纸。成功后默认停留在当前未保存画布，不打开保存窗口；只有用户明确要求 DWG 时才另存、重开并检查可编辑性。
 
 如果交给豆包完成小样，可以这样说：
 
-> 请使用 autocad-mac-live-redraw，根据我提供的图纸，在本机 AutoCAD 的空白画布上逐图元绘制，完成后保存为新的可编辑 DWG。如果 AutoCAD 不可操作，就停止并说明原因。
+> 请使用 autocad-mac-live-redraw，根据我提供的图纸，在本机 AutoCAD 的空白画布上逐图元绘制。完成后停留在画布，不要保存、另存或关闭图纸。如果 AutoCAD 不可操作，就停止并说明原因。
 
 调用者不需要知道单键命令、LSP、Bundle 或延时参数；这些细节由 Skill 内部处理。
 

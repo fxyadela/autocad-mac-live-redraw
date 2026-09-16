@@ -423,7 +423,7 @@ def compile_lisp(entities: list[dict], layers: dict[str, int], insunits: int,
         f"      (if (/= cad-redraw-count {expected}) (princ \"\\nCADREDRAW FAILED: internal count mismatch.\"))",
         f"      (if (or (null model) (/= (sslength model) {expected})) (princ \"\\nCADREDRAW FAILED: native model-space count mismatch. Do not save.\"))",
         f"      (if (and model (= (sslength model) {expected}) (= cad-redraw-count {expected}))",
-        f"        (princ {q(chr(10) + 'CADREDRAW DONE: ' + str(len(entities)) + ' source entries, ' + str(expected) + ' native model-space objects. Verify and Save As a NEW DWG.')}) )",
+        f"        (princ {q(chr(10) + 'CADREDRAW DONE: ' + str(len(entities)) + ' source entries, ' + str(expected) + ' native model-space objects. Leave this drawing open and unsaved unless the user explicitly asks to save.')}) )",
         "    ))",
         "  (princ))",
         f"(defun C:1 () (cad-redraw-run {delay_ms}))",
@@ -461,7 +461,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Generated {args.out}: {len(entities)} source entries -> {expected} native model-space objects; units={insunits}; types={dict(counts)}")
     print("Next terminal step: python3 scripts/deploy_autocad_bundle.py --lsp " +
           shlex.quote(str(args.out)))
-    print("Offline compile only. Native bundle/CADLIVE, NEW DWG save, reopen/edit and source-image QA remain unverified.")
+    print("Offline compile only. Native bundle/CADLIVE and source-image QA remain unverified. Saving is intentionally not requested by this compile step.")
     return 0
 
 

@@ -71,6 +71,9 @@ class MacCompilerTest(unittest.TestCase):
         self.assertLess(output.index('"_.ZOOM" "_Window"'), output.index('(cad-redraw-make'))
         self.assertNotIn('CADREDRAW batch:', output)
         self.assertNotIn("win32com", output)
+        self.assertIn("Leave this drawing open and unsaved", output)
+        self.assertNotIn('"_.SAVE', output)
+        self.assertNotIn('"_.QSAVE', output)
 
     def test_unsupported_entity_blocks_entire_compile(self) -> None:
         spec = copy.deepcopy(self.spec)
