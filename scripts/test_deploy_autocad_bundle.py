@@ -20,7 +20,7 @@ module_spec.loader.exec_module(deployer)
 
 def generated_lsp(marker: str = "one") -> bytes:
     return (f"; {marker}\n"
-            "(defun C:K () (princ))\n"
+            "(defun C:1 () (princ))\n"
             "(defun C:CADLIVE () (princ))\n"
             "(defun C:CADFAST () (princ))\n").encode("utf-8")
 
@@ -44,7 +44,7 @@ class BundleDeployTest(unittest.TestCase):
                 for command in root_xml.findall(".//Command")
             }
             self.assertEqual(commands, {
-                "K": "K", "CADLIVE": "CADLIVE", "CADFAST": "CADFAST"
+                "1": "1", "CADLIVE": "CADLIVE", "CADFAST": "CADFAST"
             })
             self.assertEqual(root_xml.attrib["AppVersion"], deployer.PACKAGE_VERSION)
 
@@ -81,7 +81,7 @@ class BundleDeployTest(unittest.TestCase):
                     0,
                 )
             self.assertIn("BUNDLE_INSTALLED", output.getvalue())
-            self.assertIn("_APPAUTOLOADER", output.getvalue())
+            self.assertIn("no APPAUTOLOADER", output.getvalue())
             self.assertNotIn("restart AutoCAD once", output.getvalue())
 
             output = StringIO()
@@ -104,7 +104,7 @@ class BundleDeployTest(unittest.TestCase):
                     0,
                 )
             self.assertIn("BUNDLE_UPGRADED", output.getvalue())
-            self.assertIn("_APPAUTOLOADER", output.getvalue())
+            self.assertIn("no APPAUTOLOADER", output.getvalue())
 
 
 if __name__ == "__main__":

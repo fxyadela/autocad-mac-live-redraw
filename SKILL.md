@@ -35,15 +35,15 @@ python3 scripts/compile_mac_redraw.py --spec /绝对路径/重绘清单.json --o
 python3 scripts/deploy_autocad_bundle.py --lsp /绝对路径/新图绘制.lsp
 ```
 
-它把当前 LSP 放入当前用户的 AutoCAD `ApplicationAddins/AutoCADMacLiveRedraw.bundle`，并在 bundle 清单中注册单键命令 `K`、完整命令 `CADLIVE` 和无停顿核验命令 `CADFAST`，由 AutoCAD 在调用命令时加载。部署输出会明确标记 `BUNDLE_INSTALLED`、`BUNDLE_UPGRADED` 或 `BUNDLE_UPDATED`；此目录只用于本技能自己的 bundle，不修改 `SECURELOAD`、`TRUSTEDPATHS` 或 Autodesk 安装目录。
+它把当前 LSP 放入当前用户的 AutoCAD `ApplicationAddins/AutoCADMacLiveRedraw.bundle`，并在 bundle 清单中注册数字单键命令 `1`、完整命令 `CADLIVE` 和无停顿核验命令 `CADFAST`，由 AutoCAD 在调用命令时加载。部署输出会明确标记 `BUNDLE_INSTALLED`、`BUNDLE_UPGRADED` 或 `BUNDLE_UPDATED`；此目录只用于本技能自己的 bundle，不修改 `SECURELOAD`、`TRUSTEDPATHS` 或 Autodesk 安装目录。
 
 ## 豆包在 Mac AutoCAD 的实际操作
 
 1. 在切换到 AutoCAD 前，先在后台完成识图、清单校验、LSP 编译和 bundle 部署；不要让用户观看代理在文件窗口中反复找文件。确认豆包的本地电脑/操作电脑功能实际可用且 AutoCAD 主界面/许可状态正常。若原生应用打不开、弹许可窗口、指令无响应，先报告这个阻断；进程存在 ≠ 绘图画布可用。不得用静态预览伪装应用操作。
-2. 严格按部署输出处理。`BUNDLE_UPDATED`：不退出、不重启 AutoCAD，直接新建空白图。`BUNDLE_INSTALLED` 或 `BUNDLE_UPGRADED`：若 AutoCAD 已打开，只在命令行执行一次 `_APPAUTOLOADER` 并选择 `_Reload`，然后新建空白图；若 AutoCAD 尚未打开，正常启动一次即可。重载失败就停止报告，**不得通过退出重启继续恢复**。不要打开 `APPLOAD`，也不要查看“已加载的应用程序”列表。
+2. 严格按部署输出处理。`BUNDLE_UPDATED`：不退出、不重启 AutoCAD，直接新建空白图。`BUNDLE_INSTALLED` 或 `BUNDLE_UPGRADED`：AutoCAD for Mac 没有 `_APPAUTOLOADER` 命令；若 AutoCAD 已打开，在正式绘图任务开始前关闭并正常启动一次，让新命令清单被发现；若尚未打开，正常启动即可。这是安装/升级后的单次准备，不是失败恢复；任务中不得再反复重启。不要打开 `APPLOAD`，也不要查看“已加载的应用程序”列表。
 3. 整个绘图阶段必须留在 AutoCAD；不得按 F1、点击帮助/问号、打开或切换浏览器，也不得在没有看见弹窗时猜测“安全确认正在等待”并全屏搜索。若意外出现浏览器或 Autodesk 帮助页，立即停止并报告误触，不得返回 AutoCAD 继续重试。
-4. 先看命令栏是否为空闲的“键入命令/Command:”。若仍显示 `CIRCLE`、`SAVEAS` 或其他参数提示，只按一次 Escape；未回到空闲状态就停止报告。空闲后单击输入区一次，使用 `press_key` 只按字母 `K`，再按 Return 一次。`K` 是专为桌面操作文本被截断而注册的单键绘制命令；不得通过 `type_text`/`set_value` 输入 `CADLIVE`，否则只送入首字母 `C` 时会误启动 `CIRCLE`。不要输入以 `(` 开头的 AutoLISP 表达式。若 `K` 一次执行后仍未出现 `CADREDRAW loaded.` 和首个图元，停止并报告命令栏原文；不得重启、打开 APPLOAD、搜索文件、检查安全弹窗或再次提交命令。
-5. `K` 应让图元在已定位的画布上一个接一个出现；`CADLIVE` 只作为人工键盘的完整名称备用，只有做无停顿核验时才使用 `CADFAST`。不要通过打开预先生成的 DWG/DXF 冒充逐一绘制。脚本拒绝在已有模型空间对象的图中重复执行。中文字符依赖当前 AutoCAD 文字引擎及字体，视觉复查必须包含中文、尺寸箭头和图层。
+4. 先看命令栏是否为空闲的“键入命令/Command:”。若仍显示 `CIRCLE`、`SAVEAS` 或其他参数提示，只按一次 Escape；未回到空闲状态就停止报告。空闲后单击输入区一次，用 `type_text` 只输入单个字符 `1`，再按 Return 一次。`1` 是专为桌面操作长文本被截断而注册的单键绘制命令；不得通过 `type_text`/`set_value` 输入 `CADLIVE`，否则只送入首字母 `C` 时会误启动 `CIRCLE`。不要输入以 `(` 开头的 AutoLISP 表达式。若 `1` 一次执行后仍未出现 `CADREDRAW loaded.` 和首个图元，停止并报告命令栏原文；不得重启、打开 APPLOAD、搜索文件、检查安全弹窗或再次提交命令。
+5. `1` 应让图元在已定位的画布上一个接一个出现；`CADLIVE` 只作为人工键盘的完整名称备用，只有做无停顿核验时才使用 `CADFAST`。不要通过打开预先生成的 DWG/DXF 冒充逐一绘制。脚本拒绝在已有模型空间对象的图中重复执行。中文字符依赖当前 AutoCAD 文字引擎及字体，视觉复查必须包含中文、尺寸箭头和图层。
 6. 看见命令栏的完成信息后，检查画布对象数和进度；若有 `CADREDRAW FAILED` 或中途停止，不保存部分图纸，不要声称成功。核对原图的重要尺寸、墙线门窗、文字/表格/填充，不合格则返修清单再重画。若旧 DXF 路线，在 UI 打开现有 DXF 并看其全部内容，而不是打开自动生成的演示预览。
 7. 用 AutoCAD 的“另存为”选择 **DWG**，保存到新的绝对路径。关闭并重开这个 DWG；在本机点击/修改至少一个墙线、门窗、文字或标注对象，检查层与尺寸，必要时再保存。保留原图、清单、LSP、DXF 和 DWG 的独立路径；不覆盖源文件。
 8. 汇报分开列：清单校准与原图准确度、LSP/DXF 离线校验、AutoCAD 实际加载和逐步绘制、DWG 保存、重开编辑/视觉对照。每级缺证据就标“未验证”，不能靠日志或视频推断交付完成。

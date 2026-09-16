@@ -426,10 +426,10 @@ def compile_lisp(entities: list[dict], layers: dict[str, int], insunits: int,
         f"        (princ {q(chr(10) + 'CADREDRAW DONE: ' + str(len(entities)) + ' source entries, ' + str(expected) + ' native model-space objects. Verify and Save As a NEW DWG.')}) )",
         "    ))",
         "  (princ))",
-        f"(defun C:K () (cad-redraw-run {delay_ms}))",
+        f"(defun C:1 () (cad-redraw-run {delay_ms}))",
         f"(defun C:CADLIVE () (cad-redraw-run {delay_ms}))",
         "(defun C:CADFAST () (cad-redraw-run 0))",
-        "(princ \"\\nCADREDRAW loaded. New blank drawing -> press K, or use CADLIVE/CADFAST.\")",
+        "(princ \"\\nCADREDRAW loaded. New blank drawing -> type 1, or use CADLIVE/CADFAST.\")",
         "(princ)",
     ]
     return "\n".join(lines) + "\n", expected

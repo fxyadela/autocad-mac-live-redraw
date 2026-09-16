@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deploy one generated live-redraw LSP as an AutoCAD for Mac command bundle.
 
-The bundle registers one-key K plus CADLIVE and CADFAST with AutoCAD's command
+The bundle registers one-key 1 plus CADLIVE and CADFAST with AutoCAD's command
 autoloader, so an agent affected by truncated text entry never needs a long
 command, AutoLISP expression, APPLOAD, or an in-task AutoCAD restart.
 """
@@ -16,12 +16,12 @@ import tempfile
 
 BUNDLE_NAME = "AutoCADMacLiveRedraw.bundle"
 PRODUCT_CODE = "{A8F2BE99-8B9D-4F56-8A46-41D1B4553190}"
-PACKAGE_VERSION = "1.2.0"
+PACKAGE_VERSION = "1.3.0"
 PACKAGE_XML = f"""<?xml version="1.0" encoding="utf-8"?>
 <ApplicationPackage SchemaVersion="1.0" AppVersion="{PACKAGE_VERSION}"
   ProductCode="{PRODUCT_CODE}"
   Name="AutoCAD Mac Live Redraw"
-  Description="Loads the current native live-redraw script when K or CADLIVE is invoked."
+  Description="Loads the current native live-redraw script when 1 or CADLIVE is invoked."
   Author="fxyadela">
   <CompanyDetails Name="fxyadela" />
   <Components>
@@ -32,7 +32,7 @@ PACKAGE_XML = f"""<?xml version="1.0" encoding="utf-8"?>
       AppType="Lisp"
       PerDocument="True">
       <Commands GroupName="AutoCADMacLiveRedrawCommands">
-        <Command Global="K" Local="K" />
+        <Command Global="1" Local="1" />
         <Command Global="CADLIVE" Local="CADLIVE" />
         <Command Global="CADFAST" Local="CADFAST" />
       </Commands>
@@ -94,7 +94,7 @@ def deploy_bundle(source: Path, bundle_dir: Path) -> Path:
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("lsp must be UTF-8") from exc
-    for required in ("(defun C:K", "(defun C:CADLIVE", "(defun C:CADFAST"):
+    for required in ("(defun C:1", "(defun C:CADLIVE", "(defun C:CADFAST"):
         if required not in text:
             raise ValueError(f"lsp is not a generated live-redraw file: missing {required}")
 
@@ -127,11 +127,11 @@ def main(argv: list[str] | None = None) -> int:
         print("BUNDLE_UPDATED: command manifest unchanged. Do not quit or restart AutoCAD.")
     else:
         print(f"BUNDLE_{mode.upper()}: command manifest changed.")
-        print("If AutoCAD is already open, run _APPAUTOLOADER and choose _Reload once; do not quit or restart AutoCAD.")
+        print("AutoCAD for Mac has no APPAUTOLOADER command. If it is open, close and launch it once before the drawing task; never restart as a retry.")
         print("If AutoCAD is closed, its next normal launch will discover the bundle.")
-    print("Create a NEW blank drawing, verify the command line is idle, then press K and Return once.")
+    print("Create a NEW blank drawing, verify the command line is idle, type exactly 1, then press Return once.")
     print("Do not type CADLIVE through unreliable long-text UI input; a lone C starts CIRCLE.")
-    print("Never open APPLOAD, Help/F1, or a browser. If K is unknown, stop and report it.")
+    print("Never open APPLOAD, Help/F1, or a browser. If 1 is unknown, stop and report it.")
     return 0
 
 
