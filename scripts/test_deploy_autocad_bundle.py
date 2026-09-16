@@ -20,6 +20,7 @@ module_spec.loader.exec_module(deployer)
 
 def generated_lsp(marker: str = "one") -> bytes:
     return (f"; {marker}\n"
+            "(defun C:K () (princ))\n"
             "(defun C:CADLIVE () (princ))\n"
             "(defun C:CADFAST () (princ))\n").encode("utf-8")
 
@@ -42,7 +43,9 @@ class BundleDeployTest(unittest.TestCase):
                 command.attrib["Global"]: command.attrib["Local"]
                 for command in root_xml.findall(".//Command")
             }
-            self.assertEqual(commands, {"CADLIVE": "CADLIVE", "CADFAST": "CADFAST"})
+            self.assertEqual(commands, {
+                "K": "K", "CADLIVE": "CADLIVE", "CADFAST": "CADFAST"
+            })
             self.assertEqual(root_xml.attrib["AppVersion"], deployer.PACKAGE_VERSION)
 
             source.write_bytes(generated_lsp("two"))

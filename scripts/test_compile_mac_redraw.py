@@ -63,9 +63,9 @@ class MacCompilerTest(unittest.TestCase):
         self.assertEqual(expected, 13)
         self.assertTrue(balanced_lisp(output))
         for fragment in ('(entmake data)', '"_.DIMALIGNED"', '"_.DIMROTATED"',
-                         '"_.DELAY"', '(redraw made 1)', '"_.ZOOM" "_Window"',
+                         '(command-s "_.DELAY"', '(redraw made 1)', '"_.ZOOM" "_Window"',
                          '"卧室"', '"测试\\\\P多行"',
-                         '(defun C:CADLIVE', 'CADREDRAW DONE'):
+                         '(defun C:K', '(defun C:CADLIVE', 'CADREDRAW DONE'):
             self.assertIn(fragment, output)
         self.assertEqual(output.count("      (cad-redraw-show pause)"), expected)
         self.assertLess(output.index('"_.ZOOM" "_Window"'), output.index('(cad-redraw-make'))
@@ -109,6 +109,7 @@ class MacCompilerTest(unittest.TestCase):
             with redirect_stdout(stdout):
                 self.assertEqual(compiler.main(argv), 0)
             first = dest.read_bytes()
+            self.assertIn(b"(defun C:K () (cad-redraw-run 35))", first)
             self.assertIn(b"(defun C:CADLIVE () (cad-redraw-run 35))", first)
             self.assertIn("deploy_autocad_bundle.py --lsp", stdout.getvalue())
             self.assertNotIn("(progn (load", stdout.getvalue())
