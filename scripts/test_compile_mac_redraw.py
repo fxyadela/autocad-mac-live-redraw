@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import copy
+from contextlib import redirect_stdout
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
@@ -103,8 +105,12 @@ class MacCompilerTest(unittest.TestCase):
             specfile.write_text(json.dumps(self.spec, ensure_ascii=False), encoding="utf-8")
             dest = directory / "native.lsp"
             argv = ["--spec", str(specfile), "--out", str(dest)]
-            self.assertEqual(compiler.main(argv), 0)
+            stdout = io.StringIO()
+            with redirect_stdout(stdout):
+                self.assertEqual(compiler.main(argv), 0)
             first = dest.read_bytes()
+            self.assertIn(b"(defun C:CADLIVE () (cad-redraw-run 35))", first)
+            self.assertIn(f'(progn (load "{dest.as_posix()}") (C:CADLIVE))', stdout.getvalue())
             self.assertEqual(compiler.main(argv), 2)
             self.assertEqual(dest.read_bytes(), first)
             self.assertEqual(compiler.main(["--spec", "relative.json", "--out", str(directory / "bad.lsp")]), 2)

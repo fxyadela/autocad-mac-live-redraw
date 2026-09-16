@@ -358,7 +358,7 @@ def compile_lisp(entities: list[dict], layers: dict[str, int], insunits: int,
     xmin, ymin, xmax, ymax = drawing_view_window(entities)
     lines = [
         "; AutoCAD for Mac native editables; generated from checked JSON, NOT an image preview.",
-        "; Run only in a newly created blank model-space drawing. APPLOAD, then CADLIVE.",
+        "; Run only in a newly created blank model-space drawing. Load this file, then CADLIVE.",
         "(defun cad-redraw-abort (msg)",
         "  (princ (strcat \"\\nCADREDRAW FAILED: \" msg \". Discard unsaved partial drawing.\"))",
         "  (if cad-redraw-undo (command-s \"_.UNDO\" \"_End\"))",
@@ -437,7 +437,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec", required=True, type=Path, help="Absolute path to evidence-backed JSON spec")
     parser.add_argument("--out", required=True, type=Path, help="New absolute .lsp file; never overwrites")
-    parser.add_argument("--delay-ms", type=int, default=60, help="Visible delay after every native object (0..3000)")
+    parser.add_argument("--delay-ms", type=int, default=35, help="Visible delay after every native object (0..3000)")
     parser.add_argument("--batch-size", type=int, default=25, help="Source entries per progress message (1..100); drawing is always object-by-object")
     args = parser.parse_args(argv)
     try:
@@ -457,7 +457,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     counts = Counter(e["type"] for e in entities)
     print(f"Generated {args.out}: {len(entities)} source entries -> {expected} native model-space objects; units={insunits}; types={dict(counts)}")
-    print("Offline compile only. Native APPLOAD/CADLIVE, NEW DWG save, reopen/edit and source-image QA remain unverified.")
+    fast_command = f"(progn (load {q(args.out.as_posix())}) (C:CADLIVE))"
+    print(f"AutoCAD fast start (TYPE into the command line; do not open APPLOAD or paste): {fast_command}")
+    print("Offline compile only. Native load/CADLIVE, NEW DWG save, reopen/edit and source-image QA remain unverified.")
     return 0
 
 

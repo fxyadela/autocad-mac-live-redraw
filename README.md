@@ -27,10 +27,10 @@
 python3 scripts/compile_mac_redraw.py \
   --spec "$(pwd)/references/sample-spec.json" \
   --out "$(pwd)/sample-redraw.lsp" \
-  --delay-ms 60
+  --delay-ms 35
 ```
 
-编译成功只产生 `.lsp`，不会打开 AutoCAD、保存 DWG 或修改既有图纸。接着在本机 AutoCAD **新建空白图**，用 `APPLOAD` 加载 `sample-redraw.lsp`；按应用安全提示正常处理，不要关闭 `SECURELOAD`。在命令栏输入 `CADLIVE` 看图元一个接一个出现，或输入 `CADFAST` 做无停顿测试。若出现 `CADREDRAW FAILED`、画布未完成或对象数不符，不保存部分图纸。成功后另存为**新的 DWG**，关闭重开，并实际选中/修改一个图元检验可编辑性。
+编译成功只产生 `.lsp`，不会打开 AutoCAD、保存 DWG 或修改既有图纸。编译器同时输出一条 `AutoCAD fast start` 命令。接着在本机 AutoCAD **新建空白图**，点击命令行并逐键输入这条命令，一次完成加载和 `CADLIVE`；不要打开 `APPLOAD` 文件窗口，也不要用剪贴板粘贴，后者可能触发 `PASTECLIP`。按应用安全提示正常处理，不要关闭 `SECURELOAD`。若出现 `CADREDRAW FAILED`、画布未完成或对象数不符，不保存部分图纸。成功后另存为**新的 DWG**，关闭重开，并实际选中/修改一个图元检验可编辑性。
 
 如果交给豆包完成小样，可以这样说：
 
