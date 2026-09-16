@@ -1,6 +1,6 @@
 ---
 name: autocad-mac-live-redraw
-description: 在 macOS 的本机 AutoCAD 中，把已校准的二维重绘清单分批画成可编辑 CAD 图元，或将现有 DXF 导入另存为 DWG。适用于豆包工作等具备本地电脑操作能力的代理；不适用于 Windows COM 自动化。
+description: 在 macOS 的本机 AutoCAD 中，把已校准的二维重绘清单按图元逐一画成可编辑 CAD 图形，或将现有 DXF 导入另存为 DWG。适用于豆包工作等具备本地电脑操作能力的代理；不适用于 Windows COM 自动化。
 ---
 
 # AutoCAD for Mac 本机重绘
@@ -24,15 +24,15 @@ description: 在 macOS 的本机 AutoCAD 中，把已校准的二维重绘清单
 从技能目录运行（不要替换现有文件）：
 
 ```bash
-python3 scripts/compile_mac_redraw.py --spec /绝对路径/重绘清单.json --out /绝对路径/新图绘制.lsp --delay-ms 160 --batch-size 5
+python3 scripts/compile_mac_redraw.py --spec /绝对路径/重绘清单.json --out /绝对路径/新图绘制.lsp --delay-ms 60
 ```
 
-编译阶段先严格核验字段、非有限数字、图层、单位、所有类型；仅支持 `line`, `polyline`, `rectangle`, `circle`, `arc`, `text`, `mtext`, `leader`（线段加文字，并非原生 LEADER）, `linear_dimension`, `aligned_dimension`, `center_mark`。`table` 和 `radial_dimension` 等当前不支持，编译会失败；需要这些内容时选择完整 DXF 导入路线或进一步实现适配，不能只画几根线就说图纸完成。`text_style`/非连续线型/复杂尺寸样式未在此编译器实现，遇到明确请求亦会失败。主路径在 AutoCAD 原生画布按清单顺序分批创建图元，默认无自动覆盖、清空或保存。
+编译阶段先严格核验字段、非有限数字、图层、单位、所有类型；仅支持 `line`, `polyline`, `rectangle`, `circle`, `arc`, `text`, `mtext`, `leader`（线段加文字，并非原生 LEADER）, `linear_dimension`, `aligned_dimension`, `center_mark`。`table` 和 `radial_dimension` 等当前不支持，编译会失败；需要这些内容时选择完整 DXF 导入路线或进一步实现适配，不能只画几根线就说图纸完成。`text_style`/非连续线型/复杂尺寸样式未在此编译器实现，遇到明确请求亦会失败。主路径会在开始前定位整张图的视口，再按清单顺序每创建一个原生图元立即显示；`--delay-ms` 控制每个图元后的短暂停顿，推荐 40–80 毫秒以兼顾速度和可见性。默认无自动覆盖、清空或保存。
 
 ## 豆包在 Mac AutoCAD 的实际操作
 
 1. 确认豆包的本地电脑/操作电脑功能实际可用且 AutoCAD 主界面/许可状态正常。若原生应用打不开、弹许可窗口、指令无响应，先报告这个阻断；进程存在 ≠ 绘图画布可用。不得用静态预览伪装应用操作。
-2. 通过本地软件 UI 在 AutoCAD **新建空白图**，用 APPLOAD 加载新生成的 `.lsp`（应用安全/信任提示由用户正常确认，不要关闭 `SECURELOAD`）。命令栏输入 `CADLIVE` 可分批重绘；测试时可输入 `CADFAST` 无停顿重绘。脚本拒绝在已有模型空间对象的图中重复执行。中文字符依赖当前 AutoCAD 文字引擎及字体，视觉复查必须包含中文、尺寸箭头和图层。
+2. 通过本地软件 UI 在 AutoCAD **新建空白图**，用 APPLOAD 加载新生成的 `.lsp`（应用安全/信任提示由用户正常确认，不要关闭 `SECURELOAD`）。命令栏输入 `CADLIVE`，应当看到图元在已定位的画布上一个接一个出现；只有做无停顿核验时才输入 `CADFAST`。不要通过打开预先生成的 DWG/DXF 冒充逐一绘制。脚本拒绝在已有模型空间对象的图中重复执行。中文字符依赖当前 AutoCAD 文字引擎及字体，视觉复查必须包含中文、尺寸箭头和图层。
 3. 看见命令栏的完成信息后，检查画布对象数和批次；若有 `CADREDRAW FAILED` 或中途停止，不保存部分图纸，不要声称成功。核对原图的重要尺寸、墙线门窗、文字/表格/填充，不合格则返修清单再重画。若旧 DXF 路线，在 UI 打开现有 DXF 并看其全部内容，而不是打开自动生成的演示预览。
 4. 用 AutoCAD 的“另存为”选择 **DWG**，保存到新的绝对路径。关闭并重开这个 DWG；在本机点击/修改至少一个墙线、门窗、文字或标注对象，检查层与尺寸，必要时再保存。保留原图、清单、LSP、DXF 和 DWG 的独立路径；不覆盖源文件。
 5. 汇报分开列：清单校准与原图准确度、LSP/DXF 离线校验、AutoCAD 实际加载和逐步绘制、DWG 保存、重开编辑/视觉对照。每级缺证据就标“未验证”，不能靠日志或视频推断交付完成。

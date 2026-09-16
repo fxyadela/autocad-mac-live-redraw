@@ -61,9 +61,13 @@ class MacCompilerTest(unittest.TestCase):
         self.assertEqual(expected, 13)
         self.assertTrue(balanced_lisp(output))
         for fragment in ('(entmake data)', '"_.DIMALIGNED"', '"_.DIMROTATED"',
-                         '"_.DELAY"', '"卧室"', '"测试\\\\P多行"',
+                         '"_.DELAY"', '(redraw made 1)', '"_.ZOOM" "_Window"',
+                         '"卧室"', '"测试\\\\P多行"',
                          '(defun C:CADLIVE', 'CADREDRAW DONE'):
             self.assertIn(fragment, output)
+        self.assertEqual(output.count("      (cad-redraw-show pause)"), expected)
+        self.assertLess(output.index('"_.ZOOM" "_Window"'), output.index('(cad-redraw-make'))
+        self.assertNotIn('CADREDRAW batch:', output)
         self.assertNotIn("win32com", output)
 
     def test_unsupported_entity_blocks_entire_compile(self) -> None:

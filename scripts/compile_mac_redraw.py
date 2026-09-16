@@ -248,6 +248,52 @@ def coords_rect(e: dict) -> list[tuple[float, float]]:
     return [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
 
 
+def entity_view_points(e: dict) -> list[tuple[float, float]]:
+    """Return conservative points used to frame the drawing before creation."""
+    kind = e["type"]
+    if kind == "line":
+        return [point(e["start"], "line.start"), point(e["end"], "line.end")]
+    if kind == "polyline":
+        return [point(value, "polyline.points") for value in e["points"]]
+    if kind == "rectangle":
+        return coords_rect(e)
+    if kind in ("circle", "arc"):
+        x, y = point(e["center"], kind + ".center")
+        radius = number(e["radius"], kind + ".radius")
+        return [(x - radius, y - radius), (x + radius, y + radius)]
+    if kind in ("text", "mtext"):
+        x, y = point(e["point"], kind + ".point")
+        height = number(e.get("height", 3.5), kind + ".height")
+        if kind == "mtext":
+            width = number(e["width"], "mtext.width")
+        else:
+            width = max(height, min(len(e["text"]), 24) * height * 0.65)
+        pad = max(height, width)
+        return [(x - pad, y - pad), (x + pad, y + pad)]
+    if kind == "leader":
+        values = [point(value, "leader.points") for value in e["points"]]
+        values.append(point(e.get("text_point", e["points"][-1]), "leader.text_point"))
+        return values
+    if kind.endswith("_dimension"):
+        return [point(e["p1"], kind + ".p1"), point(e["p2"], kind + ".p2"),
+                point(e["dimline"], kind + ".dimline")]
+    if kind == "center_mark":
+        x, y = point(e["center"], "center_mark.center")
+        half = number(e.get("size", 10), "center_mark.size") / 2
+        return [(x - half, y - half), (x + half, y + half)]
+    raise AssertionError(kind)
+
+
+def drawing_view_window(entities: list[dict]) -> tuple[float, float, float, float]:
+    points = [value for entity in entities for value in entity_view_points(entity)]
+    xs = [value[0] for value in points]
+    ys = [value[1] for value in points]
+    xmin, xmax, ymin, ymax = min(xs), max(xs), min(ys), max(ys)
+    span = max(xmax - xmin, ymax - ymin, 1.0)
+    margin = span * 0.04
+    return xmin - margin, ymin - margin, xmax + margin, ymax + margin
+
+
 def polyline(e: dict, index: int, pts: list[tuple[float, float]], closed: bool) -> str:
     if closed and pts[-1] == pts[0]:
         pts = pts[:-1]
@@ -309,6 +355,7 @@ def emit_entity(e: dict, index: int) -> list[str]:
 def compile_lisp(entities: list[dict], layers: dict[str, int], insunits: int,
                  *, delay_ms: int, batch_size: int) -> tuple[str, int]:
     expected = sum(len(emit_entity(e, index)) for index, e in enumerate(entities, 1))
+    xmin, ymin, xmax, ymax = drawing_view_window(entities)
     lines = [
         "; AutoCAD for Mac native editables; generated from checked JSON, NOT an image preview.",
         "; Run only in a newly created blank model-space drawing. APPLOAD, then CADLIVE.",
@@ -333,9 +380,12 @@ def compile_lisp(entities: list[dict], layers: dict[str, int], insunits: int,
         "        (setq data (append data (list (cons 1 override)))))",
         "      (if (not (entmod data)) (cad-redraw-abort (strcat label \" text override\")))))",
         "  (setq cad-redraw-count (1+ cad-redraw-count)))",
-        "(defun cad-redraw-show (pause)",
-        "  (command-s \"_.REGEN\")",
-        "  (if (> pause 0) (command-s \"_.DELAY\" (itoa pause))))",
+        "(defun cad-redraw-show (pause / made)",
+        "  (if (> pause 0)",
+        "    (progn",
+        "      (setq made (entlast))",
+        "      (if made (redraw made 1))",
+        "      (command \"_.DELAY\" (itoa pause)))))",
         "(defun cad-redraw-run (pause / existing model)",
         "  (setq existing (ssget \"_X\" '((410 . \"Model\"))))",
         "  (if existing",
@@ -350,13 +400,20 @@ def compile_lisp(entities: list[dict], layers: dict[str, int], insunits: int,
             continue
         definition = f"(list {pair(0, q('LAYER'))} {pair(100, q('AcDbSymbolTableRecord'))} {pair(100, q('AcDbLayerTableRecord'))} {pair(2, q(name))} {pair(70, '0')} {pair(62, str(index_color))} {pair(6, q('Continuous'))})"
         lines.append(f"      (if (not (tblsearch \"LAYER\" {q(name)})) (if (not (entmake {definition})) (cad-redraw-abort {q('layer ' + name)})))")
+    lines.append(
+        f"      (command-s \"_.ZOOM\" \"_Window\" (list {fmt(xmin)} {fmt(ymin)} 0.0) "
+        f"(list {fmt(xmax)} {fmt(ymax)} 0.0))"
+    )
+    native_index = 0
     for index, e in enumerate(entities, 1):
         for command in emit_entity(e, index):
             lines.append("      " + command)
-        if index % batch_size == 0 or index == len(entities):
-            batch_message = f"\nCADREDRAW batch: {index}/{len(entities)} source entries"
-            lines.append(f"      (princ {q(batch_message)})")
             lines.append("      (cad-redraw-show pause)")
+            native_index += 1
+        if index % batch_size == 0 or index == len(entities):
+            progress_message = f"\nCADREDRAW progress: {index}/{len(entities)} source entries"
+            lines.append(f"      (princ {q(progress_message)})")
+    assert native_index == expected
     lines += [
         "      (command-s \"_.ZOOM\" \"_Extents\")",
         "      (command-s \"_.UNDO\" \"_End\")",
@@ -380,8 +437,8 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--spec", required=True, type=Path, help="Absolute path to evidence-backed JSON spec")
     parser.add_argument("--out", required=True, type=Path, help="New absolute .lsp file; never overwrites")
-    parser.add_argument("--delay-ms", type=int, default=160, help="Visible delay between batches (0..3000)")
-    parser.add_argument("--batch-size", type=int, default=5, help="Source entries per visible batch (1..100)")
+    parser.add_argument("--delay-ms", type=int, default=60, help="Visible delay after every native object (0..3000)")
+    parser.add_argument("--batch-size", type=int, default=25, help="Source entries per progress message (1..100); drawing is always object-by-object")
     args = parser.parse_args(argv)
     try:
         if not args.spec.is_absolute() or not args.out.is_absolute() or args.out.suffix.lower() != ".lsp":
