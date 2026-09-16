@@ -13,6 +13,7 @@ import json
 import math
 from pathlib import Path
 import re
+import shlex
 import sys
 
 
@@ -457,9 +458,9 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     counts = Counter(e["type"] for e in entities)
     print(f"Generated {args.out}: {len(entities)} source entries -> {expected} native model-space objects; units={insunits}; types={dict(counts)}")
-    fast_command = f"(progn (load {q(args.out.as_posix())}) (C:CADLIVE))"
-    print(f"AutoCAD fast start (TYPE into the command line; do not open APPLOAD or paste): {fast_command}")
-    print("Offline compile only. Native load/CADLIVE, NEW DWG save, reopen/edit and source-image QA remain unverified.")
+    print("Next terminal step: python3 scripts/deploy_autocad_bundle.py --lsp " +
+          shlex.quote(str(args.out)))
+    print("Offline compile only. Native bundle/CADLIVE, NEW DWG save, reopen/edit and source-image QA remain unverified.")
     return 0
 
 
