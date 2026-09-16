@@ -35,17 +35,18 @@ python3 scripts/compile_mac_redraw.py --spec /绝对路径/重绘清单.json --o
 python3 scripts/deploy_autocad_bundle.py --lsp /绝对路径/新图绘制.lsp
 ```
 
-它把当前 LSP 放入当前用户的 AutoCAD `ApplicationAddins/AutoCADMacLiveRedraw.bundle`，由 AutoCAD 按文档自动加载。首次安装后只需在正式录制前重启 AutoCAD 一次；以后每轮替换当前 LSP 后新建空白图即可。此目录只用于本技能自己的 bundle，不修改 `SECURELOAD`、`TRUSTEDPATHS` 或 Autodesk 安装目录。
+它把当前 LSP 放入当前用户的 AutoCAD `ApplicationAddins/AutoCADMacLiveRedraw.bundle`，并在 bundle 清单中注册 `CADLIVE`、`CADFAST`，由 AutoCAD 在调用命令时加载。部署输出会明确标记 `BUNDLE_INSTALLED`、`BUNDLE_UPGRADED` 或 `BUNDLE_UPDATED`；此目录只用于本技能自己的 bundle，不修改 `SECURELOAD`、`TRUSTEDPATHS` 或 Autodesk 安装目录。
 
 ## 豆包在 Mac AutoCAD 的实际操作
 
 1. 在切换到 AutoCAD 前，先在后台完成识图、清单校验、LSP 编译和 bundle 部署；不要让用户观看代理在文件窗口中反复找文件。确认豆包的本地电脑/操作电脑功能实际可用且 AutoCAD 主界面/许可状态正常。若原生应用打不开、弹许可窗口、指令无响应，先报告这个阻断；进程存在 ≠ 绘图画布可用。不得用静态预览伪装应用操作。
-2. 首次部署 bundle 后，在正式录制前正常重启 AutoCAD 一次；若出现第三方代码加载安全提示，由用户正常确认，不要关闭 `SECURELOAD` 或修改 `TRUSTEDPATHS`。后续更新当前 LSP 不需重复安装或重启，但必须在部署后新建一个空白图，使每文档加载拿到最新版。部署脚本成功退出且 bundle 文件存在就是准备完成的依据；**不要打开 APPLOAD，也不要查看“已加载的应用程序”列表来验证 bundle**，该列表不是此自动加载流程的验收界面。
-3. 在空白图中只输入短命令 `CADLIVE`。不要输入任何以 `(` 开头的 AutoLISP 表达式，也不要在 `type_text`、`set_value`、逐键 `press_key` 之间反复重试；这些都是已确认会造成卡顿的同一路径。若短命令一次输入后仍未执行，停止并报告命令栏原文，不能再转入 APPLOAD 或文件搜索窗口。
-4. `CADLIVE` 应让图元在已定位的画布上一个接一个出现；只有做无停顿核验时才输入 `CADFAST`。不要通过打开预先生成的 DWG/DXF 冒充逐一绘制。脚本拒绝在已有模型空间对象的图中重复执行。中文字符依赖当前 AutoCAD 文字引擎及字体，视觉复查必须包含中文、尺寸箭头和图层。
-5. 看见命令栏的完成信息后，检查画布对象数和进度；若有 `CADREDRAW FAILED` 或中途停止，不保存部分图纸，不要声称成功。核对原图的重要尺寸、墙线门窗、文字/表格/填充，不合格则返修清单再重画。若旧 DXF 路线，在 UI 打开现有 DXF 并看其全部内容，而不是打开自动生成的演示预览。
-6. 用 AutoCAD 的“另存为”选择 **DWG**，保存到新的绝对路径。关闭并重开这个 DWG；在本机点击/修改至少一个墙线、门窗、文字或标注对象，检查层与尺寸，必要时再保存。保留原图、清单、LSP、DXF 和 DWG 的独立路径；不覆盖源文件。
-7. 汇报分开列：清单校准与原图准确度、LSP/DXF 离线校验、AutoCAD 实际加载和逐步绘制、DWG 保存、重开编辑/视觉对照。每级缺证据就标“未验证”，不能靠日志或视频推断交付完成。
+2. 严格按部署输出处理。`BUNDLE_UPDATED`：不退出、不重启 AutoCAD，直接新建空白图。`BUNDLE_INSTALLED` 或 `BUNDLE_UPGRADED`：若 AutoCAD 已打开，只在命令行执行一次 `_APPAUTOLOADER` 并选择 `_Reload`，然后新建空白图；若 AutoCAD 尚未打开，正常启动一次即可。重载失败就停止报告，**不得通过退出重启继续恢复**。不要打开 `APPLOAD`，也不要查看“已加载的应用程序”列表。
+3. 整个绘图阶段必须留在 AutoCAD；不得按 F1、点击帮助/问号、打开或切换浏览器，也不得在没有看见弹窗时猜测“安全确认正在等待”并全屏搜索。若意外出现浏览器或 Autodesk 帮助页，立即停止并报告误触，不得返回 AutoCAD 继续重试。
+4. 在空白图中单击命令行输入区一次，只输入短命令 `CADLIVE` 并回车一次。不要输入任何以 `(` 开头的 AutoLISP 表达式，也不要在 `type_text`、`set_value`、逐键 `press_key` 之间切换重试。若 `CADLIVE` 一次输入后仍未执行或未出现 `CADREDRAW loaded.`，停止并报告命令栏原文；不得重启、打开 APPLOAD、搜索文件、检查安全弹窗或再次提交命令。
+5. `CADLIVE` 应让图元在已定位的画布上一个接一个出现；只有做无停顿核验时才输入 `CADFAST`。不要通过打开预先生成的 DWG/DXF 冒充逐一绘制。脚本拒绝在已有模型空间对象的图中重复执行。中文字符依赖当前 AutoCAD 文字引擎及字体，视觉复查必须包含中文、尺寸箭头和图层。
+6. 看见命令栏的完成信息后，检查画布对象数和进度；若有 `CADREDRAW FAILED` 或中途停止，不保存部分图纸，不要声称成功。核对原图的重要尺寸、墙线门窗、文字/表格/填充，不合格则返修清单再重画。若旧 DXF 路线，在 UI 打开现有 DXF 并看其全部内容，而不是打开自动生成的演示预览。
+7. 用 AutoCAD 的“另存为”选择 **DWG**，保存到新的绝对路径。关闭并重开这个 DWG；在本机点击/修改至少一个墙线、门窗、文字或标注对象，检查层与尺寸，必要时再保存。保留原图、清单、LSP、DXF 和 DWG 的独立路径；不覆盖源文件。
+8. 汇报分开列：清单校准与原图准确度、LSP/DXF 离线校验、AutoCAD 实际加载和逐步绘制、DWG 保存、重开编辑/视觉对照。每级缺证据就标“未验证”，不能靠日志或视频推断交付完成。
 
 ## 使用边界
 

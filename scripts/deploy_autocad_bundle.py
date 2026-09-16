@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Deploy one generated CADLIVE LSP as a per-document AutoCAD for Mac bundle.
+"""Deploy one generated CADLIVE LSP as an AutoCAD for Mac command bundle.
 
-The bundle removes the need to type a long AutoLISP expression or use APPLOAD.
-After a one-time AutoCAD restart, replace the bundled LSP before opening a new
-blank drawing, then enter the short command CADLIVE.
+The bundle registers CADLIVE and CADFAST with AutoCAD's command autoloader, so
+the drawing agent never needs a long AutoLISP expression, APPLOAD, or an
+in-task AutoCAD restart.
 """
 
 from __future__ import annotations
@@ -16,11 +16,12 @@ import tempfile
 
 BUNDLE_NAME = "AutoCADMacLiveRedraw.bundle"
 PRODUCT_CODE = "{A8F2BE99-8B9D-4F56-8A46-41D1B4553190}"
+PACKAGE_VERSION = "1.1.0"
 PACKAGE_XML = f"""<?xml version="1.0" encoding="utf-8"?>
-<ApplicationPackage SchemaVersion="1.0" AppVersion="1.0.0"
+<ApplicationPackage SchemaVersion="1.0" AppVersion="{PACKAGE_VERSION}"
   ProductCode="{PRODUCT_CODE}"
   Name="AutoCAD Mac Live Redraw"
-  Description="Loads the current CADLIVE redraw script in each AutoCAD document."
+  Description="Loads the current CADLIVE redraw script when its command is invoked."
   Author="fxyadela">
   <CompanyDetails Name="fxyadela" />
   <Components>
@@ -29,7 +30,12 @@ PACKAGE_XML = f"""<?xml version="1.0" encoding="utf-8"?>
       AppDescription="Current native live-redraw commands"
       ModuleName="./Contents/cadlive-current.lsp"
       AppType="Lisp"
-      PerDocument="True" />
+      PerDocument="True">
+      <Commands GroupName="AutoCADMacLiveRedrawCommands">
+        <Command Global="CADLIVE" Local="CADLIVE" />
+        <Command Global="CADFAST" Local="CADFAST" />
+      </Commands>
+    </ComponentEntry>
   </Components>
 </ApplicationPackage>
 """
@@ -55,6 +61,19 @@ def atomic_write(path: Path, data: bytes) -> None:
         except FileNotFoundError:
             pass
         raise
+
+
+def deployment_mode(bundle_dir: Path) -> str:
+    """Return installed, upgraded, or updated without changing the bundle."""
+    if bundle_dir.is_symlink():
+        raise ValueError("bundle-dir must not be a symlink")
+    package = bundle_dir / "PackageContents.xml"
+    if not package.is_file():
+        return "installed"
+    text = package.read_text(encoding="utf-8")
+    if PRODUCT_CODE not in text:
+        raise ValueError(f"refusing to modify an unrelated bundle: {bundle_dir}")
+    return "updated" if text == PACKAGE_XML else "upgraded"
 
 
 def deploy_bundle(source: Path, bundle_dir: Path) -> Path:
@@ -97,13 +116,20 @@ def main(argv: list[str] | None = None) -> int:
                         help="Testing override; normally leave at the per-user Mac default")
     args = parser.parse_args(argv)
     try:
+        mode = deployment_mode(args.bundle_dir)
         target = deploy_bundle(args.lsp, args.bundle_dir)
     except (OSError, ValueError) as exc:
         print(f"CADREDRAW bundle deploy FAILED: {exc}")
         return 2
     print(f"Deployed current redraw: {target}")
-    print("First install: restart AutoCAD once. Each run: create a NEW blank drawing, then type CADLIVE.")
-    print("Do NOT open APPLOAD or inspect its loaded-applications list; stop if CADLIVE is unknown.")
+    if mode == "updated":
+        print("BUNDLE_UPDATED: command manifest unchanged. Do not quit or restart AutoCAD.")
+    else:
+        print(f"BUNDLE_{mode.upper()}: command manifest changed.")
+        print("If AutoCAD is already open, run _APPAUTOLOADER and choose _Reload once; do not quit or restart AutoCAD.")
+        print("If AutoCAD is closed, its next normal launch will discover the bundle.")
+    print("Create a NEW blank drawing, then type CADLIVE once.")
+    print("Never open APPLOAD, Help/F1, or a browser. If CADLIVE is unknown, stop and report it.")
     return 0
 
 

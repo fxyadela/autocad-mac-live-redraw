@@ -27,4 +27,4 @@ JSON 根节点：`metadata`、`layers`、`entities`。此格式兼容 `autocad-i
 
 图层名需符合 AutoCAD 字符规则，层 `color` 为 1–255，`linetype` 当前只接受 `Continuous`。图元可单独设 `color` 1–255。未声明的图层可自动建立默认白色。`text_style`/特殊字体、虚线和 `table`、`radial_dimension`、`hatch`、`ellipse` 等非支持图元 **不会静默省略**，必须换完整 DXF 保真路线、另作开发或说明未交付。OCR/标注证据应继续保存在 `source_refs`、`confidence`、`notes` 等字段。
 
-输出的 `.lsp` 需要先用 `scripts/deploy_autocad_bundle.py` 部署到本机 AutoCAD 用户级 bundle。首次部署后重启 AutoCAD，以后更新 LSP 后只需新建空白图并输入短命令 `CADLIVE`；不要输入长 Lisp 表达式或打开 `APPLOAD`。`CADLIVE` 会预先定位视口并逐个显示原生图元，`CADFAST` 为无停顿核验。导出的 DWG 须另存、重开、实际选中图元和对照原图，离线编译成功不能替代这些检查。
+输出的 `.lsp` 需要先用 `scripts/deploy_autocad_bundle.py` 部署到本机 AutoCAD 用户级 bundle。`BUNDLE_UPDATED` 后只需新建空白图；`BUNDLE_INSTALLED`/`BUNDLE_UPGRADED` 且 AutoCAD 已打开时，用 `_APPAUTOLOADER` → `_Reload` 刷新一次插件，不要退出重启。之后只输入一次短命令 `CADLIVE`；不要输入长 Lisp 表达式，不要打开 `APPLOAD`、F1、帮助页或浏览器。命令不识别就立即停止报告。`CADLIVE` 会预先定位视口并逐个显示原生图元，`CADFAST` 为无停顿核验。导出的 DWG 须另存、重开、实际选中图元和对照原图，离线编译成功不能替代这些检查。
