@@ -34,7 +34,9 @@ python3 scripts/compile_mac_redraw.py \
 
 如果交给豆包完成小样，可以这样说：
 
-> 请使用 autocad-mac-live-redraw，在本机 AutoCAD 的新空白图里先运行仓库提供的测试清单，逐步画出对象并另存为新的 DWG。关闭重开后选中修改一条墙线，告诉我哪些步骤亲眼完成；如果 AutoCAD 不可操作，就停下来报告，不要只给预览图。
+> 请使用 autocad-mac-live-redraw，根据我提供的图纸，在本机 AutoCAD 的空白画布上逐图元绘制，完成后保存为新的可编辑 DWG。如果 AutoCAD 不可操作，就停止并说明原因。
+
+调用者不需要知道单键命令、LSP、Bundle 或延时参数；这些细节由 Skill 内部处理。
 
 正式图纸应先按 [输入规范](references/spec.md) 建立清单并核对原图，再走原生绘制；若图纸有编译器不支持但已有高质量 DXF 的完整内容，可选择在 AutoCAD 中打开 DXF、另存 DWG、重开编辑的保真路径。这条路径**不是**从空白逐笔画的演示。完整操作约束在 [SKILL.md](SKILL.md)。
 
