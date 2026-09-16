@@ -20,9 +20,19 @@ module_spec.loader.exec_module(deployer)
 
 def generated_lsp(marker: str = "one") -> bytes:
     return (f"; {marker}\n"
+            "(defun C:0 () (princ))\n"
             "(defun C:1 () (princ))\n"
             "(defun C:CADLIVE () (princ))\n"
             "(defun C:CADFAST () (princ))\n").encode("utf-8")
+
+
+def generated_batch_lsp(count: int = 3) -> bytes:
+    lines = [f"; CADREDRAW BATCH COUNT: {count}",
+             "(defun C:0 () (princ))",
+             "(defun C:1 () (princ))",
+             "(defun C:CADLIVE () (princ))",
+             "(defun C:CADFAST () (princ))"]
+    return ("\n".join(lines) + "\n").encode("utf-8")
 
 
 class BundleDeployTest(unittest.TestCase):
@@ -51,6 +61,10 @@ class BundleDeployTest(unittest.TestCase):
             source.write_bytes(generated_lsp("two"))
             self.assertEqual(deployer.deploy_bundle(source, bundle).read_bytes(),
                              generated_lsp("two"))
+
+            source.write_bytes(generated_batch_lsp())
+            self.assertEqual(deployer.deploy_bundle(source, bundle).read_bytes(),
+                             generated_batch_lsp())
 
     def test_rejects_unrelated_or_invalid_input(self) -> None:
         with tempfile.TemporaryDirectory(prefix="cad-bundle-test-") as folder:

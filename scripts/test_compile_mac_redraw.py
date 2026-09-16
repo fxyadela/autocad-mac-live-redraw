@@ -65,7 +65,7 @@ class MacCompilerTest(unittest.TestCase):
         for fragment in ('(entmake data)', '"_.DIMALIGNED"', '"_.DIMROTATED"',
                          '(command-s "_.DELAY"', '(redraw made 1)', '"_.ZOOM" "_Window"',
                          '"卧室"', '"测试\\\\P多行"',
-                         '(defun C:1', '(defun C:CADLIVE', 'CADREDRAW DONE'):
+                         '(defun C:0', '(defun C:1', '(defun C:CADLIVE', 'CADREDRAW DONE'):
             self.assertIn(fragment, output)
         self.assertEqual(output.count("      (cad-redraw-show pause)"), expected)
         self.assertLess(output.index('"_.ZOOM" "_Window"'), output.index('(cad-redraw-make'))

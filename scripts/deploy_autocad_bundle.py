@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Deploy one generated live-redraw LSP as an AutoCAD for Mac command bundle.
+"""Deploy a generated single or batch live-redraw LSP as a Mac command bundle.
 
-The bundle registers one-key 1 plus CADLIVE and CADFAST with AutoCAD's command
-autoloader, so an agent affected by truncated text entry never needs a long
-command, AutoLISP expression, APPLOAD, or an in-task AutoCAD restart.
+The manifest keeps the proven one-key 1 plus CADLIVE and CADFAST. Once loaded
+inside a drawing, the LSP also defines 0 as a QNEW helper for the next drawing.
+An agent affected by truncated text entry never needs a long command, AutoLISP
+expression, APPLOAD, or an in-task AutoCAD restart.
 """
 
 from __future__ import annotations
@@ -94,7 +95,7 @@ def deploy_bundle(source: Path, bundle_dir: Path) -> Path:
         text = data.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError("lsp must be UTF-8") from exc
-    for required in ("(defun C:1", "(defun C:CADLIVE", "(defun C:CADFAST"):
+    for required in ("(defun C:0", "(defun C:1", "(defun C:CADLIVE", "(defun C:CADFAST"):
         if required not in text:
             raise ValueError(f"lsp is not a generated live-redraw file: missing {required}")
 
@@ -130,8 +131,10 @@ def main(argv: list[str] | None = None) -> int:
         print("AutoCAD for Mac has no APPAUTOLOADER command. If it is open, close and launch it once before the drawing task; never restart as a retry.")
         print("If AutoCAD is closed, its next normal launch will discover the bundle.")
     print("Create a NEW blank drawing, verify the command line is idle, type exactly 1, then press Return once.")
+    print("For a batch, type 0 only after one drawing is verified complete; then type 1 again in the new drawing.")
     print("Do not type CADLIVE through unreliable long-text UI input; a lone C starts CIRCLE.")
-    print("Never open APPLOAD, Help/F1, or a browser. If 1 is unknown, stop and report it.")
+    print("Never open APPLOAD, Help/F1, or a browser.")
+    print("If a digit is unknown or 0 does not produce a blank drawing, stop and report the command line.")
     return 0
 
 
